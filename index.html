@@ -3,305 +3,259 @@
 <head>
 <meta charset="UTF-8">
 <title>Presupuesto Personal</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Meta tag para adaptar a dispositivos móviles -->
-<!-- Agregar Font Awesome para iconos -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-<style>
-    body {
-        font-family: Arial, sans-serif;
-        background: #f4f6f8;
-        padding: 20px;
-    }
-    h1 {
-        color: #2c3e50;
-        text-align: center;
-        font-size: 2rem;
-    }
-    .card {
-        background: white;
-        padding: 15px;
-        border-radius: 8px;
-        margin-bottom: 15px;
-        max-width: 600px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-        margin: 0 auto;
-    }
-    input, select, button {
-        width: 100%;
-        padding: 8px;
-        margin-bottom: 10px;
-        box-sizing: border-box; /* Asegura que los elementos se ajusten bien */
-    }
-    button {
-        cursor: pointer;
-        transition: background-color 0.3s;
-    }
-    .btn-add { background: #2ecc71; color: white; }
-    .btn-add:hover { background-color: #27ae60; }
-    .btn-del { background: #e74c3c; color: white; }
-    .btn-del:hover { background-color: #c0392b; }
-    .btn-exp { background: #3498db; color: white; }
-    .btn-exp:hover { background-color: #2980b9; }
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 10px;
-        font-size: 0.9rem;
-    }
-    th, td {
-        border: 1px solid #ccc;
-        padding: 12px;
-        text-align: center;
-    }
-    th {
-        background-color: #f2f2f2;
-    }
-    tr:nth-child(even) {
-        background-color: #f9f9f9;
-    }
-    .resumen {
-        font-weight: bold;
-        margin-top: 10px;
-        font-size: 1.1rem;
-    }
-    .negativo { color: red; }
-    .positivo { color: green; }
-    
-    .icon {
-        font-size: 1.5rem;
-        color: #16a085;
-    }
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    /* Estilos responsivos */
-    @media (max-width: 768px) {
-        h1 {
-            font-size: 1.5rem;
-        }
-        .card {
-            padding: 10px;
-        }
-        table {
-            font-size: 0.8rem;
-        }
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+:root {
+    --bg:#0f172a;
+    --card:#020617;
+    --text:#e5e7eb;
+    --muted:#94a3b8;
+    --green:#22c55e;
+    --blue:#3b82f6;
+    --red:#ef4444;
+    --border:#1e293b;
+}
+*{box-sizing:border-box}
+body{
+    margin:0;
+    font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    padding:16px;
+}
+h1,h3{text-align:center}
+.card{
+    background:var(--card);
+    border-radius:14px;
+    padding:16px;
+    margin-bottom:16px;
+    max-width:800px;
+    margin-inline:auto;
+    box-shadow:0 10px 30px rgba(0,0,0,.4);
+}
+input,select,button{
+    width:100%;
+    padding:12px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:#020617;
+    color:var(--text);
+    font-size:16px;
+    margin-bottom:10px;
+}
+button{border:none;font-weight:600}
+.btn-add{background:var(--green);color:#022c22}
+.btn-exp{background:var(--blue);color:white}
+.btn-del{background:var(--red);color:white}
+.resumen{font-size:18px;margin-top:8px}
+.positivo{color:var(--green)}
+.negativo{color:var(--red)}
+
+.table-wrapper{overflow-x:auto}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{padding:10px;border-bottom:1px solid var(--border);text-align:center}
+th{color:var(--muted);font-weight:500}
+
+/* ===== MOBILE CARDS ===== */
+@media(max-width:640px){
+    table,thead,tbody,th,tr{display:block}
+    thead{display:none}
+    tr{
+        background:#020617;
+        border:1px solid var(--border);
+        border-radius:12px;
+        padding:12px;
+        margin-bottom:12px;
     }
+    td{
+        display:flex;
+        justify-content:space-between;
+        padding:6px 0;
+        border:none;
+        font-size:15px;
+    }
+    td::before{
+        content:attr(data-label);
+        color:var(--muted);
+        font-weight:500;
+    }
+}
 </style>
 </head>
 
 <body>
 
-<h1><i class="fas fa-piggy-bank icon"></i> 📊 Presupuesto Personal Mensual</h1>
+<h1>💰 Presupuesto Personal</h1>
 
 <div class="card">
-    <h3>💵 Ingreso mensual</h3>
-    <input type="number" id="ingreso" placeholder="Ej: 3500000">
-    <button class="btn-add" onclick="guardarIngreso()">Guardar ingreso</button>
+  <h3>📅 Mes de trabajo</h3>
+  <input type="month" id="mesActual">
+  <button class="btn-exp" onclick="guardarMes()">Guardar mes</button>
 </div>
 
 <div class="card">
-    <h3>📌 Agregar deuda</h3>
-    <input type="text" id="nombre" placeholder="Nombre de la deuda">
-    <input type="number" id="valorPrestamo" placeholder="Valor del préstamo">
-    <input type="number" id="interes" placeholder="Porcentaje de interés mensual (0 si no aplica)">
-    <input type="number" id="tiempoMeses" placeholder="Tiempo en meses">
-    <button class="btn-add" onclick="agregarDeuda()">Agregar deuda</button>
+  <h3>💵 Ingreso mensual</h3>
+  <input type="number" id="ingreso">
+  <button class="btn-add" onclick="guardarIngreso()">Guardar ingreso</button>
 </div>
 
 <div class="card">
-    <h3>📋 Detalle de deudas</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>Deuda</th>
-                <th>Valor del préstamo</th>
-                <th>Interés</th>
-                <th>Tiempo (meses)</th>
-                <th>Cuota mensual</th>
-                <th>Total a pagar</th>
-                <th>Acción</th>
-            </tr>
-        </thead>
-        <tbody id="tabla"></tbody>
-    </table>
+  <h3>📌 Agregar deuda</h3>
+  <input id="nombre" placeholder="Nombre">
+  <input id="valorPrestamo" type="number" placeholder="Valor préstamo">
+  <input id="interes" type="number" placeholder="Interés mensual % (0 si no tiene)">
+  <input id="tiempoMeses" type="number" placeholder="Meses">
+  <button class="btn-add" onclick="agregarDeuda()">Agregar deuda</button>
+</div>
 
-    <p class="resumen">Total de deudas: $<span id="totalDeudas">0</span></p>
-    <p class="resumen">Saldo disponible: 
-        $<span id="saldo" class="positivo">0</span>
-    </p>
+<div class="card">
+  <h3>📋 Deudas</h3>
+  <div class="table-wrapper">
+  <table>
+    <thead>
+      <tr>
+        <th>Deuda</th><th>Préstamo</th><th>%</th><th>Meses</th>
+        <th>Cuota</th><th>Total</th><th>Acción</th>
+      </tr>
+    </thead>
+    <tbody id="tabla"></tbody>
+  </table>
+  </div>
 
-    <p class="resumen">Selecciona una deuda para simulación de pago anticipado: </p>
-    <!-- Este es el select donde se elegirán las deudas -->
-    <select id="selectDeuda">
-        <option value="">-- Elige una deuda --</option>
-    </select>
-    <input type="number" id="nuevoTiempoMeses" placeholder="Nuevo tiempo en meses (Ej: 3)">
-    <button class="btn-exp" onclick="simularPagoAnticipado()">Simular pago anticipado</button>
-    <p id="simuladorResultado"></p>
+  <p class="resumen">Total de deudas: $<span id="totalDeudas">0</span></p>
+  <p class="resumen">Saldo disponible: $<span id="saldo">0</span></p>
+</div>
 
-    <button class="btn-exp" onclick="exportarExcel()">Exportar a Excel</button>
+<div class="card">
+  <h3>📊 Gráficos</h3>
+  <canvas id="graficoResumen" height="220"></canvas>
+  <canvas id="graficoDeudas" height="220" style="margin-top:20px"></canvas>
+</div>
+
+<div class="card">
+  <h3>⏱️ Simular pago anticipado</h3>
+  <select id="selectDeuda"></select>
+  <input type="number" id="nuevoTiempo" placeholder="Nuevo tiempo en meses">
+  <button class="btn-exp" onclick="simularPago()">Simular</button>
+  <p id="resultadoSimulacion"></p>
 </div>
 
 <script>
-// Definimos las funciones aquí al final del archivo
+let deudas=JSON.parse(localStorage.getItem("deudas"))||[];
+let ingreso=Number(localStorage.getItem("ingreso"))||0;
+let graficoResumen=null,graficoDeudas=null;
 
-let deudas = JSON.parse(localStorage.getItem("deudas")) || [];
-let ingreso = Number(localStorage.getItem("ingreso")) || 0;
-
-document.getElementById("ingreso").value = ingreso;
+document.getElementById("ingreso").value=ingreso;
 renderizar();
 
-function guardarIngreso() {
-    ingreso = Number(document.getElementById("ingreso").value);
-    localStorage.setItem("ingreso", ingreso);
-    renderizar();
+function guardarIngreso(){
+  ingreso=Number(document.getElementById("ingreso").value)||0;
+  localStorage.setItem("ingreso",ingreso);
+  renderizar();
 }
 
-function agregarDeuda() {
-    const nombre = document.getElementById("nombre").value;
-    const valorPrestamo = Number(document.getElementById("valorPrestamo").value);
-    const interes = Number(document.getElementById("interes").value);
-    const tiempoMeses = Number(document.getElementById("tiempoMeses").value);
+function agregarDeuda(){
+  const nombre=document.getElementById("nombre").value;
+  const valor=Number(document.getElementById("valorPrestamo").value);
+  const interes=Number(document.getElementById("interes").value);
+  const meses=Number(document.getElementById("tiempoMeses").value);
+  if(!nombre||valor<=0||meses<=0)return alert("Datos inválidos");
 
-    // Validación de los campos
-    if (nombre === "" || valorPrestamo <= 0 || tiempoMeses <= 0) {
-        alert("Datos inválidos");
-        return;
-    }
+  let total=interes>0 ? valor*(1+(interes/100)*meses) : valor;
+  let cuota=total/meses;
 
-    // Si no hay interés (0%), lo tratamos como deuda sin interés
-    let cuotaMensual = 0;
-    let totalPagar = 0;
-
-    if (interes === 0) {
-        cuotaMensual = valorPrestamo / tiempoMeses;  // Deuda sin interés
-        totalPagar = valorPrestamo;  // Total a pagar es igual al valor del préstamo
-    } else {
-        cuotaMensual = calcularCuotaMensual(valorPrestamo, interes, tiempoMeses);
-        totalPagar = cuotaMensual * tiempoMeses;
-    }
-
-    // Crear un objeto deuda y agregarlo al arreglo de deudas
-    const nuevaDeuda = { nombre, valorPrestamo, interes, tiempoMeses, cuotaMensual, totalPagar };
-    
-    // Asegurarse de que la deuda se haya creado correctamente
-    console.log('Deuda agregada:', nuevaDeuda);
-
-    // Agregar deuda al arreglo de deudas
-    deudas.push(nuevaDeuda);
-
-    // Guardar el arreglo actualizado de deudas en localStorage
-    localStorage.setItem("deudas", JSON.stringify(deudas));
-
-    // Limpiar los campos de entrada
-    document.getElementById("nombre").value = "";
-    document.getElementById("valorPrestamo").value = "";
-    document.getElementById("interes").value = "";
-    document.getElementById("tiempoMeses").value = "";
-
-    // Llamar a renderizar() para actualizar la tabla con la nueva deuda
-    renderizar();
+  deudas.push({nombre,valorPrestamo:valor,interes,tiempoMeses:meses,cuotaMensual:cuota,totalPagar:total});
+  localStorage.setItem("deudas",JSON.stringify(deudas));
+  renderizar();
 }
 
-function eliminarDeuda(index) {
-    deudas.splice(index, 1);
-    localStorage.setItem("deudas", JSON.stringify(deudas));
-    renderizar();
+function eliminarDeuda(i){
+  deudas.splice(i,1);
+  localStorage.setItem("deudas",JSON.stringify(deudas));
+  renderizar();
 }
 
-function renderizar() {
-    const tabla = document.getElementById("tabla");
-    tabla.innerHTML = "";  // Limpiar la tabla antes de volver a renderizarla
-    let total = 0;
+function renderizar(){
+  const t=document.getElementById("tabla");
+  const sel=document.getElementById("selectDeuda");
+  t.innerHTML=""; sel.innerHTML="";
+  let total=0,cuotas=0;
 
-    // Verificar que la variable de deudas no esté vacía
-    console.log('Deudas actuales:', deudas);
+  deudas.forEach((d,i)=>{
+    total+=d.totalPagar;
+    cuotas+=d.cuotaMensual;
 
-    // Recorrer todas las deudas y mostrar sus detalles
-    deudas.forEach((d, i) => {
-        total += d.totalPagar;  // Sumar el total de cada deuda
+    let r=t.insertRow();
+    r.insertCell().innerHTML=`<td data-label="Deuda">${d.nombre}</td>`;
+    r.insertCell().innerHTML=`<td data-label="Préstamo">$${d.valorPrestamo.toLocaleString()}</td>`;
+    r.insertCell().innerHTML=`<td data-label="%">${d.interes}</td>`;
+    r.insertCell().innerHTML=`<td data-label="Meses">${d.tiempoMeses}</td>`;
+    r.insertCell().innerHTML=`<td data-label="Cuota">$${d.cuotaMensual.toLocaleString()}</td>`;
+    r.insertCell().innerHTML=`<td data-label="Total">$${d.totalPagar.toLocaleString()}</td>`;
+    r.insertCell().innerHTML=`<td data-label="Acción"><button class="btn-del" onclick="eliminarDeuda(${i})">Eliminar</button></td>`;
 
-        const fila = tabla.insertRow();
-        fila.insertCell(0).innerText = d.nombre;
-        fila.insertCell(1).innerText = `$${d.valorPrestamo.toLocaleString()}`;
-        fila.insertCell(2).innerText = `${d.interes}%`;
-        fila.insertCell(3).innerText = d.tiempoMeses;
-        fila.insertCell(4).innerText = `$${(d.cuotaMensual || 0).toLocaleString()}`;
-        fila.insertCell(5).innerText = `$${(d.totalPagar || 0).toLocaleString()}`;
+    let o=document.createElement("option");
+    o.value=i;o.textContent=d.nombre;sel.appendChild(o);
+  });
 
-        // Añadir las deudas al select para simular el pago anticipado
-        const select = document.getElementById("selectDeuda");
-        const option = document.createElement("option");
-        option.value = i;
-        option.textContent = d.nombre;
-        select.appendChild(option);
-
-        fila.insertCell(6).innerHTML =
-            `<button class="btn-del" onclick="eliminarDeuda(${i})">Eliminar</button>`;
-    });
-
-    document.getElementById("totalDeudas").innerText = total.toLocaleString();
-    const saldo = ingreso - deudas.reduce((acc, d) => acc + (d.cuotaMensual || 0), 0); // Restar solo las cuotas mensuales
-    const saldoSpan = document.getElementById("saldo");
-    saldoSpan.innerText = saldo.toLocaleString();
-    saldoSpan.className = saldo < 0 ? "negativo" : "positivo";
+  document.getElementById("totalDeudas").innerText=total.toLocaleString();
+  const saldo=ingreso-cuotas;
+  const s=document.getElementById("saldo");
+  s.innerText=saldo.toLocaleString();
+  s.className=saldo<0?"negativo":"positivo";
+  renderizarGraficos();
 }
 
-// Cálculo de la cuota mensual
-function calcularCuotaMensual(valorPrestamo, interes, tiempoMeses) {
-    const totalConInteres = valorPrestamo * (1 + (interes / 100) * tiempoMeses); 
-    return totalConInteres / tiempoMeses;  // Dividir entre el tiempo en meses para obtener la cuota mensual
+function renderizarGraficos(){
+  const cuotas=deudas.reduce((s,d)=>s+d.cuotaMensual,0);
+  const saldo=Math.max(ingreso-cuotas,0);
+
+  if(graficoResumen)graficoResumen.destroy();
+  graficoResumen=new Chart(graficoResumen=document.getElementById("graficoResumen"),{
+    type:"doughnut",
+    data:{labels:["Cuotas","Saldo"],datasets:[{data:[cuotas,saldo],backgroundColor:["#ef4444","#22c55e"]}]},
+    options:{plugins:{legend:{labels:{color:"#e5e7eb"}}}}
+  });
+
+  if(graficoDeudas)graficoDeudas.destroy();
+  graficoDeudas=new Chart(document.getElementById("graficoDeudas"),{
+    type:"bar",
+    data:{labels:deudas.map(d=>d.nombre),datasets:[{label:"Cuota mensual",data:deudas.map(d=>d.cuotaMensual),backgroundColor:"#3b82f6"}]},
+    options:{scales:{x:{ticks:{color:"#e5e7eb"}},y:{ticks:{color:"#e5e7eb"}}},plugins:{legend:{labels:{color:"#e5e7eb"}}}}
+  });
 }
 
-function simularPagoAnticipado() {
-    const select = document.getElementById("selectDeuda");
-    const deudaIndex = select.value;
+function simularPago(){
+  const i=document.getElementById("selectDeuda").value;
+  const nuevo=Number(document.getElementById("nuevoTiempo").value);
+  if(i===""||nuevo<=0)return alert("Datos inválidos");
 
-    if (deudaIndex === "") {
-        alert("Por favor selecciona una deuda para simular.");
-        return;
-    }
+  const d=deudas[i];
+  const totalNuevo=d.interes>0?d.valorPrestamo*(1+(d.interes/100)*nuevo):d.valorPrestamo;
+  const cuotaNueva=totalNuevo/nuevo;
+  const ahorro=d.totalPagar-totalNuevo;
 
-    const deuda = deudas[deudaIndex];
-    const nuevoTiempo = prompt("Ingresa el nuevo tiempo en meses (por ejemplo, 3 meses):", deuda.tiempoMeses);
-
-    if (nuevoTiempo <= 0 || isNaN(nuevoTiempo)) {
-        alert("Por favor ingresa un valor válido de tiempo.");
-        return;
-    }
-
-    // Calcular la nueva cuota mensual con el tiempo reducido
-    const nuevaCuotaMensual = calcularCuotaMensual(deuda.valorPrestamo, deuda.interes, nuevoTiempo);
-    const nuevoTotalPagar = nuevaCuotaMensual * nuevoTiempo;
-
-    const ahorro = deuda.totalPagar - nuevoTotalPagar;
-
-    const resultado = `
-        Deuda: ${deuda.nombre}<br>
-        Nuevo tiempo: ${nuevoTiempo} meses<br>
-        Nueva cuota mensual: $${nuevaCuotaMensual.toLocaleString()}<br>
-        Nuevo total a pagar: $${nuevoTotalPagar.toLocaleString()}<br>
-        Ahorro en intereses: $${ahorro.toLocaleString()}
-    `;
-
-    document.getElementById("simuladorResultado").innerHTML = resultado;
+  document.getElementById("resultadoSimulacion").innerHTML=
+    `Nueva cuota: $${cuotaNueva.toLocaleString()}<br>
+     Nuevo total: $${totalNuevo.toLocaleString()}<br>
+     Ahorro: $${ahorro.toLocaleString()}`;
 }
 
-function exportarExcel() {
-    let csv = "Deuda,Valor del préstamo,Interés,Tiempo (meses),Cuota mensual,Total a pagar\n";
-    deudas.forEach(d => {
-        csv += `${d.nombre},${d.valorPrestamo},${d.interes},${d.tiempoMeses},${d.cuotaMensual},${d.totalPagar}\n`;
-    });
-
-    csv += `\nIngreso mensual,${ingreso}\n`;
-    csv += `Total de deudas,${deudas.reduce((s,d)=>s+d.totalPagar,0)}\n`;
-    csv += `Saldo disponible,${ingreso - deudas.reduce((s,d)=>s+d.totalPagar,0)}`;
-
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "presupuesto_personal.csv";
-    link.click();
+function guardarMes(){
+  const mes=document.getElementById("mesActual").value;
+  if(!mes)return alert("Selecciona un mes");
+  const h=JSON.parse(localStorage.getItem("historico"))||{};
+  h[mes]={ingreso,deudas};
+  localStorage.setItem("historico",JSON.stringify(h));
+  alert("Mes guardado ✅");
 }
 </script>
 
 </body>
 </html>
+
+
