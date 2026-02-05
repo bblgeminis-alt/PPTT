@@ -20,7 +20,7 @@ body{margin:0;font-family:system-ui;background:var(--bg);color:var(--text);paddi
 h1,h3{text-align:center}
 .card{
  background:var(--card);border-radius:14px;padding:16px;margin-bottom:16px;
- max-width:900px;margin-inline:auto;box-shadow:0 10px 30px rgba(0,0,0,.4)
+ max-width:960px;margin-inline:auto;box-shadow:0 10px 30px rgba(0,0,0,.4)
 }
 input,select,button{
  width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);
@@ -58,33 +58,40 @@ th{color:var(--muted)}
 
 <h1>💰 Presupuesto Personal</h1>
 
+<!-- MES -->
 <div class="card">
- <h3>📅 Mes</h3>
+ <h3>📅 Mes de trabajo</h3>
  <input type="month" id="mesActual">
  <button class="btn-exp" onclick="guardarMes()">Guardar mes</button>
 </div>
 
+<!-- INGRESO -->
 <div class="card">
  <h3>💵 Ingreso mensual</h3>
  <input type="number" id="ingreso">
  <button class="btn-add" onclick="guardarIngreso()">Guardar ingreso</button>
 </div>
 
+<!-- AGREGAR DEUDA -->
 <div class="card">
  <h3>📌 Agregar deuda</h3>
- <input id="nombre" placeholder="Nombre deuda">
- <input id="valorPrestamo" type="number" placeholder="Valor préstamo">
+ <input id="nombre" placeholder="Nombre de la deuda">
+ <input id="valorPrestamo" type="number" placeholder="Valor del préstamo">
  <input id="interes" type="number" placeholder="Interés mensual % (0 si no tiene)">
  <input id="tiempoMeses" type="number" placeholder="Meses">
- <button class="btn-add" onclick="agregarDeuda()">Agregar</button>
+ <button class="btn-add" onclick="agregarDeuda()">Agregar deuda</button>
 </div>
 
+<!-- TABLA DEUDAS -->
 <div class="card">
  <h3>📋 Deudas</h3>
  <div class="table-wrapper">
  <table>
   <thead>
-   <tr><th>Deuda</th><th>Préstamo</th><th>%</th><th>Meses</th><th>Cuota</th><th>Total</th><th>Acción</th></tr>
+   <tr>
+    <th>Deuda</th><th>Préstamo</th><th>%</th><th>Meses</th>
+    <th>Cuota</th><th>Total</th><th>Acción</th>
+   </tr>
   </thead>
   <tbody id="tabla"></tbody>
  </table>
@@ -93,34 +100,46 @@ th{color:var(--muted)}
  <p class="resumen">Saldo disponible: $<span id="saldo">0</span></p>
 </div>
 
+<!-- GRAFICOS -->
 <div class="card">
  <h3>📊 Gráficos</h3>
  <canvas id="graficoResumen"></canvas>
  <canvas id="graficoDeudas" style="margin-top:20px"></canvas>
 </div>
 
+<!-- SIMULADOR -->
 <div class="card">
  <h3>⏱️ Simular pago anticipado</h3>
- <select id="selectDeuda" onchange="mostrarCuotas(this.value)"></select>
+ <select id="selectSimulador"></select>
  <input type="number" id="nuevoTiempo" placeholder="Nuevo tiempo en meses">
  <button class="btn-exp" onclick="simularPago()">Simular</button>
  <p id="resultadoSimulacion"></p>
 </div>
 
+<!-- CRONOGRAMA -->
 <div class="card">
- <h3>📆 Cronograma de cuotas</h3>
- <div class="table-wrapper">
+ <h3>📆 Cronograma de pagos</h3>
+
+ <select id="selectCronograma" onchange="generarCronograma()">
+  <option value="">-- Selecciona una deuda --</option>
+ </select>
+
+ <div class="table-wrapper" id="cronogramaExportable">
  <table>
   <thead>
-   <tr><th>Mes</th><th>Cuota</th><th>Interés</th><th>Capital</th><th>Saldo</th></tr>
+   <tr>
+    <th>Mes</th><th>Cuota</th><th>Interés</th>
+    <th>Capital</th><th>Saldo</th>
+   </tr>
   </thead>
   <tbody id="tablaCuotas"></tbody>
  </table>
  </div>
 </div>
 
+<!-- EXPORTAR -->
 <div class="card">
- <h3>📤 Exportar</h3>
+ <h3>📤 Exportar cronograma</h3>
  <button class="btn-exp" onclick="exportarExcel()">Excel</button>
  <button class="btn-exp" onclick="exportarPDF()">PDF</button>
  <button class="btn-exp" onclick="exportarImagen()">Imagen</button>
@@ -128,130 +147,194 @@ th{color:var(--muted)}
 </div>
 
 <script>
-let deudas=JSON.parse(localStorage.getItem("deudas"))||[];
-let ingreso=Number(localStorage.getItem("ingreso"))||0;
-let g1=null,g2=null;
+let deudas = JSON.parse(localStorage.getItem("deudas")) || [];
+let ingreso = Number(localStorage.getItem("ingreso")) || 0;
+let g1=null, g2=null;
 
-document.getElementById("ingreso").value=ingreso;
+document.getElementById("ingreso").value = ingreso;
 renderizar();
 
+/* INGRESO */
 function guardarIngreso(){
- ingreso=Number(ingreso=document.getElementById("ingreso").value)||0;
- localStorage.setItem("ingreso",ingreso);
+ ingreso = Number(document.getElementById("ingreso").value) || 0;
+ localStorage.setItem("ingreso", ingreso);
  renderizar();
 }
 
+/* AGREGAR DEUDA */
 function agregarDeuda(){
- let n=nombre.value,v=+valorPrestamo.value,i=+interes.value,m=+tiempoMeses.value;
- if(!n||v<=0||m<=0)return alert("Datos inválidos");
- let total=i>0?v*(1+(i/100)*m):v;
- let cuota=total/m;
+ const n=nombre.value, v=+valorPrestamo.value, i=+interes.value, m=+tiempoMeses.value;
+ if(!n||v<=0||m<=0) return alert("Datos inválidos");
+
+ const total = i>0 ? v*(1+(i/100)*m) : v;
+ const cuota = total/m;
+
  deudas.push({nombre:n,valorPrestamo:v,interes:i,tiempoMeses:m,cuotaMensual:cuota,totalPagar:total});
  localStorage.setItem("deudas",JSON.stringify(deudas));
  renderizar();
 }
 
+/* ELIMINAR */
 function eliminarDeuda(i){
  deudas.splice(i,1);
  localStorage.setItem("deudas",JSON.stringify(deudas));
  renderizar();
 }
 
+/* RENDER */
 function renderizar(){
- tabla.innerHTML="";selectDeuda.innerHTML="";
- let total=0,cuotas=0;
+ tabla.innerHTML="";
+ selectSimulador.innerHTML="";
+ selectCronograma.innerHTML='<option value="">-- Selecciona una deuda --</option>';
+
+ let total=0, cuotas=0;
+
  deudas.forEach((d,i)=>{
-  total+=d.totalPagar;cuotas+=d.cuotaMensual;
-  let r=tabla.insertRow();
-  r.innerHTML=`
-   <td data-label="Deuda">${d.nombre}</td>
-   <td data-label="Préstamo">$${d.valorPrestamo.toLocaleString()}</td>
-   <td data-label="%">${d.interes}</td>
-   <td data-label="Meses">${d.tiempoMeses}</td>
-   <td data-label="Cuota">$${d.cuotaMensual.toLocaleString()}</td>
-   <td data-label="Total">$${d.totalPagar.toLocaleString()}</td>
-   <td data-label="Acción"><button class="btn-del" onclick="eliminarDeuda(${i})">X</button></td>`;
-  let o=document.createElement("option");o.value=i;o.text=d.nombre;selectDeuda.appendChild(o);
+  total+=d.totalPagar; cuotas+=d.cuotaMensual;
+
+  tabla.innerHTML+=`
+   <tr>
+    <td data-label="Deuda">${d.nombre}</td>
+    <td data-label="Préstamo">$${d.valorPrestamo.toLocaleString()}</td>
+    <td data-label="%">${d.interes}</td>
+    <td data-label="Meses">${d.tiempoMeses}</td>
+    <td data-label="Cuota">$${d.cuotaMensual.toLocaleString()}</td>
+    <td data-label="Total">$${d.totalPagar.toLocaleString()}</td>
+    <td data-label="Acción"><button class="btn-del" onclick="eliminarDeuda(${i})">X</button></td>
+   </tr>`;
+
+  let o1=document.createElement("option");o1.value=i;o1.text=d.nombre;selectSimulador.appendChild(o1);
+  let o2=document.createElement("option");o2.value=i;o2.text=d.nombre;selectCronograma.appendChild(o2);
  });
- totalDeudas.innerText=total.toLocaleString();
- let s=ingreso-cuotas;
- saldo.innerText=s.toLocaleString();
- saldo.className=s<0?"negativo":"positivo";
+
+ totalDeudas.innerText = total.toLocaleString();
+ saldo.innerText = (ingreso-cuotas).toLocaleString();
+ saldo.className = ingreso-cuotas<0?"negativo":"positivo";
+
  graficos();
 }
 
+/* GRAFICOS */
 function graficos(){
- let cuotas=deudas.reduce((a,d)=>a+d.cuotaMensual,0);
- if(g1)g1.destroy();
- g1=new Chart(graficoResumen,{type:"doughnut",
+ let cuotas = deudas.reduce((a,d)=>a+d.cuotaMensual,0);
+
+ if(g1) g1.destroy();
+ g1=new Chart(graficoResumen,{
+  type:"doughnut",
   data:{labels:["Cuotas","Saldo"],
   datasets:[{data:[cuotas,Math.max(ingreso-cuotas,0)],
   backgroundColor:["#ef4444","#22c55e"]}]},
-  options:{plugins:{legend:{labels:{color:"#e5e7eb"}}}}});
+  options:{plugins:{legend:{labels:{color:"#e5e7eb"}}}}
+ });
 
- if(g2)g2.destroy();
- g2=new Chart(graficoDeudas,{type:"bar",
+ if(g2) g2.destroy();
+ g2=new Chart(graficoDeudas,{
+  type:"bar",
   data:{labels:deudas.map(d=>d.nombre),
-  datasets:[{label:"Cuota",data:deudas.map(d=>d.cuotaMensual),backgroundColor:"#3b82f6"}]},
+  datasets:[{label:"Cuota mensual",data:deudas.map(d=>d.cuotaMensual),
+  backgroundColor:"#3b82f6"}]},
   options:{scales:{x:{ticks:{color:"#e5e7eb"}},y:{ticks:{color:"#e5e7eb"}}},
-  plugins:{legend:{labels:{color:"#e5e7eb"}}}}});
+  plugins:{legend:{labels:{color:"#e5e7eb"}}}}
+ });
 }
 
-function mostrarCuotas(i){
+/* SIMULADOR */
+function simularPago(){
+ const i=selectSimulador.value, n=+nuevoTiempo.value;
+ if(i===""||n<=0) return alert("Datos inválidos");
+ const d=deudas[i];
+ const nuevoTotal = d.interes>0 ? d.valorPrestamo*(1+(d.interes/100)*n) : d.valorPrestamo;
+ resultadoSimulacion.innerHTML=
+  `Nuevo total: $${nuevoTotal.toLocaleString()}<br>
+   Ahorro: $${(d.totalPagar-nuevoTotal).toLocaleString()}`;
+}
+
+/* CRONOGRAMA */
+function generarCronograma(){
+ const i=selectCronograma.value;
  tablaCuotas.innerHTML="";
- if(i==="")return;
- let d=deudas[i],saldo=d.valorPrestamo;
- for(let m=1;m<=d.tiempoMeses;m++){
-  let im=saldo*(d.interes/100);
-  let cap=d.cuotaMensual-im;
-  saldo=Math.max(saldo-cap,0);
+ if(i==="") return;
+
+ const d=deudas[i];
+ let saldo=d.valorPrestamo;
+
+ for(let mes=1;mes<=d.tiempoMeses;mes++){
+  const interes=saldo*(d.interes/100);
+  const capital=d.cuotaMensual-interes;
+  saldo=Math.max(saldo-capital,0);
+
   tablaCuotas.innerHTML+=`
    <tr>
-    <td data-label="Mes">${m}</td>
+    <td data-label="Mes">${mes}</td>
     <td data-label="Cuota">$${d.cuotaMensual.toLocaleString()}</td>
-    <td data-label="Interés">$${im.toLocaleString()}</td>
-    <td data-label="Capital">$${cap.toLocaleString()}</td>
+    <td data-label="Interés">$${interes.toLocaleString()}</td>
+    <td data-label="Capital">$${capital.toLocaleString()}</td>
     <td data-label="Saldo">$${saldo.toLocaleString()}</td>
    </tr>`;
  }
 }
 
-function simularPago(){
- let i=selectDeuda.value,n=+nuevoTiempo.value;
- if(i===""||n<=0)return alert("Datos inválidos");
- let d=deudas[i];
- let total=n>0?(d.interes>0?d.valorPrestamo*(1+(d.interes/100)*n):d.valorPrestamo):0;
- resultadoSimulacion.innerHTML=
-  `Nuevo total: $${total.toLocaleString()}<br>Ahorro: $${(d.totalPagar-total).toLocaleString()}`;
+/* EXPORTACIONES */
+function exportarExcel(){
+ const i=selectCronograma.value;
+ if(i==="") return alert("Selecciona una deuda");
+ const d=deudas[i];
+ let saldo=d.valorPrestamo;
+ let csv="Mes,Cuota,Interés,Capital,Saldo\n";
+
+ for(let m=1;m<=d.tiempoMeses;m++){
+  const interes=saldo*(d.interes/100);
+  const capital=d.cuotaMensual-interes;
+  saldo=Math.max(saldo-capital,0);
+  csv+=`${m},${d.cuotaMensual},${interes},${capital},${saldo}\n`;
+ }
+
+ const blob=new Blob([csv],{type:"text/csv"});
+ const a=document.createElement("a");
+ a.href=URL.createObjectURL(blob);
+ a.download="cronograma_deuda.csv";
+ a.click();
 }
 
+function exportarPDF(){
+ if(selectCronograma.value==="") return alert("Selecciona una deuda");
+ html2pdf().from(cronogramaExportable).save("cronograma_deuda.pdf");
+}
+
+function exportarImagen(){
+ if(selectCronograma.value==="") return alert("Selecciona una deuda");
+ html2canvas(cronogramaExportable).then(c=>{
+  const a=document.createElement("a");
+  a.href=c.toDataURL();a.download="cronograma_deuda.png";a.click();
+ });
+}
+
+function copiarPortapapeles(){
+ const i=selectCronograma.value;
+ if(i==="") return alert("Selecciona una deuda");
+ const d=deudas[i];
+ let saldo=d.valorPrestamo;
+ let texto=`Cronograma - ${d.nombre}\n`;
+
+ for(let m=1;m<=d.tiempoMeses;m++){
+  const interes=saldo*(d.interes/100);
+  const capital=d.cuotaMensual-interes;
+  saldo=Math.max(saldo-capital,0);
+  texto+=`Mes ${m}: saldo $${saldo}\n`;
+ }
+
+ navigator.clipboard.writeText(texto)
+  .then(()=>alert("Cronograma copiado"));
+}
+
+/* HISTORICO */
 function guardarMes(){
- let m=mesActual.value;
- if(!m)return alert("Selecciona mes");
- let h=JSON.parse(localStorage.getItem("historico"))||{};
+ const m=mesActual.value;
+ if(!m) return alert("Selecciona un mes");
+ const h=JSON.parse(localStorage.getItem("historico"))||{};
  h[m]={ingreso,deudas};
  localStorage.setItem("historico",JSON.stringify(h));
  alert("Mes guardado");
-}
-
-function exportarExcel(){
- let csv="Deuda,Cuota,Meses,Total\n";
- deudas.forEach(d=>csv+=`${d.nombre},${d.cuotaMensual},${d.tiempoMeses},${d.totalPagar}\n`);
- let b=new Blob([csv],{type:"text/csv"});
- let a=document.createElement("a");
- a.href=URL.createObjectURL(b);a.download="presupuesto.csv";a.click();
-}
-function exportarPDF(){html2pdf().from(document.body).save("presupuesto.pdf")}
-function exportarImagen(){
- html2canvas(document.body).then(c=>{
-  let a=document.createElement("a");
-  a.href=c.toDataURL();a.download="presupuesto.png";a.click();
- });
-}
-function copiarPortapapeles(){
- let t=`Ingreso: $${ingreso}\n`;
- deudas.forEach(d=>t+=`${d.nombre}: $${d.cuotaMensual}\n`);
- navigator.clipboard.writeText(t).then(()=>alert("Copiado"));
 }
 </script>
 
