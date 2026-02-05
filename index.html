@@ -5,84 +5,51 @@
 <title>Presupuesto Personal</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- Chart.js -->
+<!-- Librerías -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
 <style>
-:root {
-    --bg:#0f172a;
-    --card:#020617;
-    --text:#e5e7eb;
-    --muted:#94a3b8;
-    --green:#22c55e;
-    --blue:#3b82f6;
-    --red:#ef4444;
-    --border:#1e293b;
+:root{
+ --bg:#0f172a;--card:#020617;--text:#e5e7eb;--muted:#94a3b8;
+ --green:#22c55e;--blue:#3b82f6;--red:#ef4444;--border:#1e293b
 }
 *{box-sizing:border-box}
-body{
-    margin:0;
-    font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
-    background:var(--bg);
-    color:var(--text);
-    padding:16px;
-}
+body{margin:0;font-family:system-ui;background:var(--bg);color:var(--text);padding:16px}
 h1,h3{text-align:center}
 .card{
-    background:var(--card);
-    border-radius:14px;
-    padding:16px;
-    margin-bottom:16px;
-    max-width:800px;
-    margin-inline:auto;
-    box-shadow:0 10px 30px rgba(0,0,0,.4);
+ background:var(--card);border-radius:14px;padding:16px;margin-bottom:16px;
+ max-width:900px;margin-inline:auto;box-shadow:0 10px 30px rgba(0,0,0,.4)
 }
 input,select,button{
-    width:100%;
-    padding:12px;
-    border-radius:10px;
-    border:1px solid var(--border);
-    background:#020617;
-    color:var(--text);
-    font-size:16px;
-    margin-bottom:10px;
+ width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);
+ background:#020617;color:var(--text);font-size:16px;margin-bottom:10px
 }
 button{border:none;font-weight:600}
 .btn-add{background:var(--green);color:#022c22}
-.btn-exp{background:var(--blue);color:white}
-.btn-del{background:var(--red);color:white}
-.resumen{font-size:18px;margin-top:8px}
-.positivo{color:var(--green)}
-.negativo{color:var(--red)}
+.btn-exp{background:var(--blue);color:#fff}
+.btn-del{background:var(--red);color:#fff}
+.resumen{font-size:18px}
+.positivo{color:var(--green)} .negativo{color:var(--red)}
 
 .table-wrapper{overflow-x:auto}
-table{width:100%;border-collapse:collapse;margin-top:10px}
+table{width:100%;border-collapse:collapse}
 th,td{padding:10px;border-bottom:1px solid var(--border);text-align:center}
-th{color:var(--muted);font-weight:500}
+th{color:var(--muted)}
 
-/* ===== MOBILE CARDS ===== */
 @media(max-width:640px){
-    table,thead,tbody,th,tr{display:block}
-    thead{display:none}
-    tr{
-        background:#020617;
-        border:1px solid var(--border);
-        border-radius:12px;
-        padding:12px;
-        margin-bottom:12px;
-    }
-    td{
-        display:flex;
-        justify-content:space-between;
-        padding:6px 0;
-        border:none;
-        font-size:15px;
-    }
-    td::before{
-        content:attr(data-label);
-        color:var(--muted);
-        font-weight:500;
-    }
+ table,thead,tbody,th,tr{display:block}
+ thead{display:none}
+ tr{
+  background:#020617;border:1px solid var(--border);
+  border-radius:12px;padding:12px;margin-bottom:12px
+ }
+ td{
+  display:flex;justify-content:space-between;
+  padding:6px 0;border:none
+ }
+ td::before{content:attr(data-label);color:var(--muted)}
 }
 </style>
 </head>
@@ -92,170 +59,201 @@ th{color:var(--muted);font-weight:500}
 <h1>💰 Presupuesto Personal</h1>
 
 <div class="card">
-  <h3>📅 Mes de trabajo</h3>
-  <input type="month" id="mesActual">
-  <button class="btn-exp" onclick="guardarMes()">Guardar mes</button>
+ <h3>📅 Mes</h3>
+ <input type="month" id="mesActual">
+ <button class="btn-exp" onclick="guardarMes()">Guardar mes</button>
 </div>
 
 <div class="card">
-  <h3>💵 Ingreso mensual</h3>
-  <input type="number" id="ingreso">
-  <button class="btn-add" onclick="guardarIngreso()">Guardar ingreso</button>
+ <h3>💵 Ingreso mensual</h3>
+ <input type="number" id="ingreso">
+ <button class="btn-add" onclick="guardarIngreso()">Guardar ingreso</button>
 </div>
 
 <div class="card">
-  <h3>📌 Agregar deuda</h3>
-  <input id="nombre" placeholder="Nombre">
-  <input id="valorPrestamo" type="number" placeholder="Valor préstamo">
-  <input id="interes" type="number" placeholder="Interés mensual % (0 si no tiene)">
-  <input id="tiempoMeses" type="number" placeholder="Meses">
-  <button class="btn-add" onclick="agregarDeuda()">Agregar deuda</button>
+ <h3>📌 Agregar deuda</h3>
+ <input id="nombre" placeholder="Nombre deuda">
+ <input id="valorPrestamo" type="number" placeholder="Valor préstamo">
+ <input id="interes" type="number" placeholder="Interés mensual % (0 si no tiene)">
+ <input id="tiempoMeses" type="number" placeholder="Meses">
+ <button class="btn-add" onclick="agregarDeuda()">Agregar</button>
 </div>
 
 <div class="card">
-  <h3>📋 Deudas</h3>
-  <div class="table-wrapper">
-  <table>
-    <thead>
-      <tr>
-        <th>Deuda</th><th>Préstamo</th><th>%</th><th>Meses</th>
-        <th>Cuota</th><th>Total</th><th>Acción</th>
-      </tr>
-    </thead>
-    <tbody id="tabla"></tbody>
-  </table>
-  </div>
-
-  <p class="resumen">Total de deudas: $<span id="totalDeudas">0</span></p>
-  <p class="resumen">Saldo disponible: $<span id="saldo">0</span></p>
+ <h3>📋 Deudas</h3>
+ <div class="table-wrapper">
+ <table>
+  <thead>
+   <tr><th>Deuda</th><th>Préstamo</th><th>%</th><th>Meses</th><th>Cuota</th><th>Total</th><th>Acción</th></tr>
+  </thead>
+  <tbody id="tabla"></tbody>
+ </table>
+ </div>
+ <p class="resumen">Total deudas: $<span id="totalDeudas">0</span></p>
+ <p class="resumen">Saldo disponible: $<span id="saldo">0</span></p>
 </div>
 
 <div class="card">
-  <h3>📊 Gráficos</h3>
-  <canvas id="graficoResumen" height="220"></canvas>
-  <canvas id="graficoDeudas" height="220" style="margin-top:20px"></canvas>
+ <h3>📊 Gráficos</h3>
+ <canvas id="graficoResumen"></canvas>
+ <canvas id="graficoDeudas" style="margin-top:20px"></canvas>
 </div>
 
 <div class="card">
-  <h3>⏱️ Simular pago anticipado</h3>
-  <select id="selectDeuda"></select>
-  <input type="number" id="nuevoTiempo" placeholder="Nuevo tiempo en meses">
-  <button class="btn-exp" onclick="simularPago()">Simular</button>
-  <p id="resultadoSimulacion"></p>
+ <h3>⏱️ Simular pago anticipado</h3>
+ <select id="selectDeuda" onchange="mostrarCuotas(this.value)"></select>
+ <input type="number" id="nuevoTiempo" placeholder="Nuevo tiempo en meses">
+ <button class="btn-exp" onclick="simularPago()">Simular</button>
+ <p id="resultadoSimulacion"></p>
+</div>
+
+<div class="card">
+ <h3>📆 Cronograma de cuotas</h3>
+ <div class="table-wrapper">
+ <table>
+  <thead>
+   <tr><th>Mes</th><th>Cuota</th><th>Interés</th><th>Capital</th><th>Saldo</th></tr>
+  </thead>
+  <tbody id="tablaCuotas"></tbody>
+ </table>
+ </div>
+</div>
+
+<div class="card">
+ <h3>📤 Exportar</h3>
+ <button class="btn-exp" onclick="exportarExcel()">Excel</button>
+ <button class="btn-exp" onclick="exportarPDF()">PDF</button>
+ <button class="btn-exp" onclick="exportarImagen()">Imagen</button>
+ <button class="btn-exp" onclick="copiarPortapapeles()">Copiar</button>
 </div>
 
 <script>
 let deudas=JSON.parse(localStorage.getItem("deudas"))||[];
 let ingreso=Number(localStorage.getItem("ingreso"))||0;
-let graficoResumen=null,graficoDeudas=null;
+let g1=null,g2=null;
 
 document.getElementById("ingreso").value=ingreso;
 renderizar();
 
 function guardarIngreso(){
-  ingreso=Number(document.getElementById("ingreso").value)||0;
-  localStorage.setItem("ingreso",ingreso);
-  renderizar();
+ ingreso=Number(ingreso=document.getElementById("ingreso").value)||0;
+ localStorage.setItem("ingreso",ingreso);
+ renderizar();
 }
 
 function agregarDeuda(){
-  const nombre=document.getElementById("nombre").value;
-  const valor=Number(document.getElementById("valorPrestamo").value);
-  const interes=Number(document.getElementById("interes").value);
-  const meses=Number(document.getElementById("tiempoMeses").value);
-  if(!nombre||valor<=0||meses<=0)return alert("Datos inválidos");
-
-  let total=interes>0 ? valor*(1+(interes/100)*meses) : valor;
-  let cuota=total/meses;
-
-  deudas.push({nombre,valorPrestamo:valor,interes,tiempoMeses:meses,cuotaMensual:cuota,totalPagar:total});
-  localStorage.setItem("deudas",JSON.stringify(deudas));
-  renderizar();
+ let n=nombre.value,v=+valorPrestamo.value,i=+interes.value,m=+tiempoMeses.value;
+ if(!n||v<=0||m<=0)return alert("Datos inválidos");
+ let total=i>0?v*(1+(i/100)*m):v;
+ let cuota=total/m;
+ deudas.push({nombre:n,valorPrestamo:v,interes:i,tiempoMeses:m,cuotaMensual:cuota,totalPagar:total});
+ localStorage.setItem("deudas",JSON.stringify(deudas));
+ renderizar();
 }
 
 function eliminarDeuda(i){
-  deudas.splice(i,1);
-  localStorage.setItem("deudas",JSON.stringify(deudas));
-  renderizar();
+ deudas.splice(i,1);
+ localStorage.setItem("deudas",JSON.stringify(deudas));
+ renderizar();
 }
 
 function renderizar(){
-  const t=document.getElementById("tabla");
-  const sel=document.getElementById("selectDeuda");
-  t.innerHTML=""; sel.innerHTML="";
-  let total=0,cuotas=0;
-
-  deudas.forEach((d,i)=>{
-    total+=d.totalPagar;
-    cuotas+=d.cuotaMensual;
-
-    let r=t.insertRow();
-    r.insertCell().innerHTML=`<td data-label="Deuda">${d.nombre}</td>`;
-    r.insertCell().innerHTML=`<td data-label="Préstamo">$${d.valorPrestamo.toLocaleString()}</td>`;
-    r.insertCell().innerHTML=`<td data-label="%">${d.interes}</td>`;
-    r.insertCell().innerHTML=`<td data-label="Meses">${d.tiempoMeses}</td>`;
-    r.insertCell().innerHTML=`<td data-label="Cuota">$${d.cuotaMensual.toLocaleString()}</td>`;
-    r.insertCell().innerHTML=`<td data-label="Total">$${d.totalPagar.toLocaleString()}</td>`;
-    r.insertCell().innerHTML=`<td data-label="Acción"><button class="btn-del" onclick="eliminarDeuda(${i})">Eliminar</button></td>`;
-
-    let o=document.createElement("option");
-    o.value=i;o.textContent=d.nombre;sel.appendChild(o);
-  });
-
-  document.getElementById("totalDeudas").innerText=total.toLocaleString();
-  const saldo=ingreso-cuotas;
-  const s=document.getElementById("saldo");
-  s.innerText=saldo.toLocaleString();
-  s.className=saldo<0?"negativo":"positivo";
-  renderizarGraficos();
+ tabla.innerHTML="";selectDeuda.innerHTML="";
+ let total=0,cuotas=0;
+ deudas.forEach((d,i)=>{
+  total+=d.totalPagar;cuotas+=d.cuotaMensual;
+  let r=tabla.insertRow();
+  r.innerHTML=`
+   <td data-label="Deuda">${d.nombre}</td>
+   <td data-label="Préstamo">$${d.valorPrestamo.toLocaleString()}</td>
+   <td data-label="%">${d.interes}</td>
+   <td data-label="Meses">${d.tiempoMeses}</td>
+   <td data-label="Cuota">$${d.cuotaMensual.toLocaleString()}</td>
+   <td data-label="Total">$${d.totalPagar.toLocaleString()}</td>
+   <td data-label="Acción"><button class="btn-del" onclick="eliminarDeuda(${i})">X</button></td>`;
+  let o=document.createElement("option");o.value=i;o.text=d.nombre;selectDeuda.appendChild(o);
+ });
+ totalDeudas.innerText=total.toLocaleString();
+ let s=ingreso-cuotas;
+ saldo.innerText=s.toLocaleString();
+ saldo.className=s<0?"negativo":"positivo";
+ graficos();
 }
 
-function renderizarGraficos(){
-  const cuotas=deudas.reduce((s,d)=>s+d.cuotaMensual,0);
-  const saldo=Math.max(ingreso-cuotas,0);
+function graficos(){
+ let cuotas=deudas.reduce((a,d)=>a+d.cuotaMensual,0);
+ if(g1)g1.destroy();
+ g1=new Chart(graficoResumen,{type:"doughnut",
+  data:{labels:["Cuotas","Saldo"],
+  datasets:[{data:[cuotas,Math.max(ingreso-cuotas,0)],
+  backgroundColor:["#ef4444","#22c55e"]}]},
+  options:{plugins:{legend:{labels:{color:"#e5e7eb"}}}}});
 
-  if(graficoResumen)graficoResumen.destroy();
-  graficoResumen=new Chart(graficoResumen=document.getElementById("graficoResumen"),{
-    type:"doughnut",
-    data:{labels:["Cuotas","Saldo"],datasets:[{data:[cuotas,saldo],backgroundColor:["#ef4444","#22c55e"]}]},
-    options:{plugins:{legend:{labels:{color:"#e5e7eb"}}}}
-  });
+ if(g2)g2.destroy();
+ g2=new Chart(graficoDeudas,{type:"bar",
+  data:{labels:deudas.map(d=>d.nombre),
+  datasets:[{label:"Cuota",data:deudas.map(d=>d.cuotaMensual),backgroundColor:"#3b82f6"}]},
+  options:{scales:{x:{ticks:{color:"#e5e7eb"}},y:{ticks:{color:"#e5e7eb"}}},
+  plugins:{legend:{labels:{color:"#e5e7eb"}}}}});
+}
 
-  if(graficoDeudas)graficoDeudas.destroy();
-  graficoDeudas=new Chart(document.getElementById("graficoDeudas"),{
-    type:"bar",
-    data:{labels:deudas.map(d=>d.nombre),datasets:[{label:"Cuota mensual",data:deudas.map(d=>d.cuotaMensual),backgroundColor:"#3b82f6"}]},
-    options:{scales:{x:{ticks:{color:"#e5e7eb"}},y:{ticks:{color:"#e5e7eb"}}},plugins:{legend:{labels:{color:"#e5e7eb"}}}}
-  });
+function mostrarCuotas(i){
+ tablaCuotas.innerHTML="";
+ if(i==="")return;
+ let d=deudas[i],saldo=d.valorPrestamo;
+ for(let m=1;m<=d.tiempoMeses;m++){
+  let im=saldo*(d.interes/100);
+  let cap=d.cuotaMensual-im;
+  saldo=Math.max(saldo-cap,0);
+  tablaCuotas.innerHTML+=`
+   <tr>
+    <td data-label="Mes">${m}</td>
+    <td data-label="Cuota">$${d.cuotaMensual.toLocaleString()}</td>
+    <td data-label="Interés">$${im.toLocaleString()}</td>
+    <td data-label="Capital">$${cap.toLocaleString()}</td>
+    <td data-label="Saldo">$${saldo.toLocaleString()}</td>
+   </tr>`;
+ }
 }
 
 function simularPago(){
-  const i=document.getElementById("selectDeuda").value;
-  const nuevo=Number(document.getElementById("nuevoTiempo").value);
-  if(i===""||nuevo<=0)return alert("Datos inválidos");
-
-  const d=deudas[i];
-  const totalNuevo=d.interes>0?d.valorPrestamo*(1+(d.interes/100)*nuevo):d.valorPrestamo;
-  const cuotaNueva=totalNuevo/nuevo;
-  const ahorro=d.totalPagar-totalNuevo;
-
-  document.getElementById("resultadoSimulacion").innerHTML=
-    `Nueva cuota: $${cuotaNueva.toLocaleString()}<br>
-     Nuevo total: $${totalNuevo.toLocaleString()}<br>
-     Ahorro: $${ahorro.toLocaleString()}`;
+ let i=selectDeuda.value,n=+nuevoTiempo.value;
+ if(i===""||n<=0)return alert("Datos inválidos");
+ let d=deudas[i];
+ let total=n>0?(d.interes>0?d.valorPrestamo*(1+(d.interes/100)*n):d.valorPrestamo):0;
+ resultadoSimulacion.innerHTML=
+  `Nuevo total: $${total.toLocaleString()}<br>Ahorro: $${(d.totalPagar-total).toLocaleString()}`;
 }
 
 function guardarMes(){
-  const mes=document.getElementById("mesActual").value;
-  if(!mes)return alert("Selecciona un mes");
-  const h=JSON.parse(localStorage.getItem("historico"))||{};
-  h[mes]={ingreso,deudas};
-  localStorage.setItem("historico",JSON.stringify(h));
-  alert("Mes guardado ✅");
+ let m=mesActual.value;
+ if(!m)return alert("Selecciona mes");
+ let h=JSON.parse(localStorage.getItem("historico"))||{};
+ h[m]={ingreso,deudas};
+ localStorage.setItem("historico",JSON.stringify(h));
+ alert("Mes guardado");
+}
+
+function exportarExcel(){
+ let csv="Deuda,Cuota,Meses,Total\n";
+ deudas.forEach(d=>csv+=`${d.nombre},${d.cuotaMensual},${d.tiempoMeses},${d.totalPagar}\n`);
+ let b=new Blob([csv],{type:"text/csv"});
+ let a=document.createElement("a");
+ a.href=URL.createObjectURL(b);a.download="presupuesto.csv";a.click();
+}
+function exportarPDF(){html2pdf().from(document.body).save("presupuesto.pdf")}
+function exportarImagen(){
+ html2canvas(document.body).then(c=>{
+  let a=document.createElement("a");
+  a.href=c.toDataURL();a.download="presupuesto.png";a.click();
+ });
+}
+function copiarPortapapeles(){
+ let t=`Ingreso: $${ingreso}\n`;
+ deudas.forEach(d=>t+=`${d.nombre}: $${d.cuotaMensual}\n`);
+ navigator.clipboard.writeText(t).then(()=>alert("Copiado"));
 }
 </script>
 
 </body>
 </html>
-
-
