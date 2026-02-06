@@ -5,7 +5,7 @@
 <title>Presupuesto Personal</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- Gráfico (solo torta) -->
+<!-- Gráfico mini (solo torta) -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <!-- Exportaciones -->
@@ -57,7 +57,7 @@ table{width:100%;border-collapse:collapse}
 th,td{padding:10px;border:1px solid var(--border);text-align:center}
 th{color:var(--muted);background:#020617}
 
-/* ===== MODO MÓVIL → TARJETAS CON ETIQUETAS ===== */
+/* ===== MÓVIL: TARJETAS CON ETIQUETAS ===== */
 @media(max-width:640px){
  table,thead,tbody,th,tr{display:block}
  thead{display:none}
@@ -76,7 +76,7 @@ th{color:var(--muted);background:#020617}
  }
 }
 
-/* ===== ESTILO EXCEL PARA EXPORTACIÓN ===== */
+/* ===== EXCEL LOOK PARA EXPORTACIÓN ===== */
 .excel-export{
  background:white;
  color:black;
@@ -100,15 +100,15 @@ th{color:var(--muted);background:#020617}
  font-weight:bold;
 }
 
-/* ===== GRÁFICO PEQUEÑO ===== */
+/* ===== GRÁFICO MINI ===== */
 .chart-mini-wrap{
  display:flex;
  justify-content:center;
  align-items:center;
 }
 #miniPie{
- max-width:260px;   /* pequeño */
- max-height:260px;  /* pequeño */
+ max-width:260px;
+ max-height:260px;
 }
 .small-note{
  text-align:center;
@@ -116,6 +116,16 @@ th{color:var(--muted);background:#020617}
  font-size:13px;
  margin-top:6px;
 }
+
+/* ===== SIMULADOR RESULTADO ===== */
+.sim-result{
+ background:#0b1224;
+ border:1px solid var(--border);
+ border-radius:12px;
+ padding:12px;
+ color:var(--text);
+}
+.sim-result strong{color:var(--green)}
 </style>
 </head>
 
@@ -123,17 +133,16 @@ th{color:var(--muted);background:#020617}
 
 <h1>💰 Presupuesto Personal</h1>
 
-<!-- INGRESO -->
+<!-- INGRESO + GRAFICO MINI -->
 <div class="card">
  <h3>💵 Ingreso mensual</h3>
  <input type="number" id="ingreso" placeholder="Ej: 3500000">
  <button class="btn-add" onclick="guardarIngreso()">Guardar ingreso</button>
 
- <!-- Gráfico mini (torta) -->
  <div class="chart-mini-wrap">
    <canvas id="miniPie"></canvas>
  </div>
- <div class="small-note">Gráfico: Ingreso mensual vs total de cuotas mensuales</div>
+ <div class="small-note">Ingreso mensual vs total de cuotas mensuales</div>
 </div>
 
 <!-- AGREGAR DEUDA -->
@@ -146,7 +155,7 @@ th{color:var(--muted);background:#020617}
  <button class="btn-add" onclick="agregarDeuda()">Agregar deuda</button>
 </div>
 
-<!-- TABLA DEUDAS -->
+<!-- DETALLE DEUDAS -->
 <div class="card">
  <h3>📋 Detalle de deudas</h3>
  <div class="table-wrapper">
@@ -168,6 +177,18 @@ th{color:var(--muted);background:#020617}
 
  <p class="resumen">Total cuotas mensuales: $<span id="totalCuotas">0</span></p>
  <p class="resumen">Saldo disponible: $<span id="saldo">0</span></p>
+</div>
+
+<!-- SIMULADOR PAGO ANTICIPADO -->
+<div class="card">
+ <h3>⏱️ Simulador de pago anticipado</h3>
+ <select id="selectSimulador">
+  <option value="">-- Selecciona una deuda --</option>
+ </select>
+ <input type="number" id="nuevoTiempo" placeholder="Nuevo tiempo en meses (ej: 3)">
+ <button class="btn-exp" onclick="simularPagoAnticipado()">Simular</button>
+
+ <div id="resultadoSimulacion" class="sim-result" style="display:none;"></div>
 </div>
 
 <!-- CRONOGRAMA -->
@@ -194,9 +215,9 @@ th{color:var(--muted);background:#020617}
  </div>
 </div>
 
-<!-- EXPORTAR -->
+<!-- EXPORTAR CRONOGRAMA -->
 <div class="card">
- <h3>📤 Exportar cronograma</h3>
+ <h3>📤 Exportar cronograma (deuda seleccionada)</h3>
  <button class="btn-exp" onclick="exportarExcel()">Excel (CSV)</button>
  <button class="btn-exp" onclick="exportarPDF()">PDF</button>
  <button class="btn-exp" onclick="exportarImagen()">Imagen</button>
@@ -215,7 +236,7 @@ renderizar();
 function guardarIngreso(){
  ingreso = Number(document.getElementById("ingreso").value) || 0;
  localStorage.setItem("ingreso", ingreso);
- renderizar(); // recalcula saldo, cuotas y gráfico
+ renderizar();
 }
 
 /* ===== AGREGAR DEUDA ===== */
@@ -254,6 +275,11 @@ function agregarDeuda(){
 function eliminarDeuda(idx){
  deudas.splice(idx,1);
  localStorage.setItem("deudas", JSON.stringify(deudas));
+ // limpiar cronograma si se eliminó la seleccionada
+ if(document.getElementById("selectCronograma").value === String(idx)){
+   document.getElementById("selectCronograma").value = "";
+   document.getElementById("tablaCuotas").innerHTML = "";
+ }
  renderizar();
 }
 
@@ -261,9 +287,11 @@ function eliminarDeuda(idx){
 function renderizar(){
  const tabla = document.getElementById("tabla");
  const selectC = document.getElementById("selectCronograma");
+ const selectS = document.getElementById("selectSimulador");
 
  tabla.innerHTML="";
  selectC.innerHTML='<option value="">-- Selecciona una deuda --</option>';
+ selectS.innerHTML='<option value="">-- Selecciona una deuda --</option>';
 
  let sumaCuotas = 0;
 
@@ -283,10 +311,15 @@ function renderizar(){
      </td>
    </tr>`;
 
-   const opt = document.createElement("option");
-   opt.value = idx;
-   opt.textContent = d.nombre;
-   selectC.appendChild(opt);
+   const optC = document.createElement("option");
+   optC.value = idx;
+   optC.textContent = d.nombre;
+   selectC.appendChild(optC);
+
+   const optS = document.createElement("option");
+   optS.value = idx;
+   optS.textContent = d.nombre;
+   selectS.appendChild(optS);
  });
 
  document.getElementById("totalCuotas").innerText = sumaCuotas.toLocaleString();
@@ -297,15 +330,19 @@ function renderizar(){
  saldoSpan.className = saldo < 0 ? "negativo" : "positivo";
 
  renderMiniPie(ingreso, sumaCuotas);
+
+ // si ya había una deuda seleccionada en cronograma, intentamos regenerar
+ const selectedCrono = selectC.value;
+ if(selectedCrono !== ""){
+   generarCronograma();
+ }
 }
 
-/* ===== GRÁFICO MINI (Ingreso vs Cuotas mensuales) ===== */
+/* ===== GRÁFICO MINI (Ingreso vs Cuotas) ===== */
 function renderMiniPie(ingresoMensual, cuotasMensuales){
  const canvas = document.getElementById("miniPie");
  const cuotas = Math.max(cuotasMensuales, 0);
  const ingresoVal = Math.max(ingresoMensual, 0);
-
- // Si cuotas > ingreso, mostramos "cuotas" y "0" en saldo
  const saldo = Math.max(ingresoVal - cuotas, 0);
 
  if(miniPieChart) miniPieChart.destroy();
@@ -331,6 +368,37 @@ function renderMiniPie(ingresoMensual, cuotasMensuales){
      cutout: "60%"
    }
  });
+}
+
+/* ===== SIMULADOR PAGO ANTICIPADO ===== */
+function simularPagoAnticipado(){
+ const idx = document.getElementById("selectSimulador").value;
+ const nuevo = Number(document.getElementById("nuevoTiempo").value);
+
+ if(idx === "") return alert("Selecciona una deuda");
+ if(!nuevo || nuevo <= 0) return alert("Ingresa un nuevo tiempo válido");
+
+ const d = deudas[idx];
+
+ // Validación: si pone más meses que los originales, igual se puede,
+ // pero el sentido es anticipar (menos meses). No lo prohibimos, solo informamos.
+ const totalNuevo = d.interes > 0
+   ? d.valorPrestamo * (1 + (d.interes/100) * nuevo)
+   : d.valorPrestamo;
+
+ const cuotaNueva = totalNuevo / nuevo;
+ const ahorro = d.totalPagar - totalNuevo;
+
+ const box = document.getElementById("resultadoSimulacion");
+ box.style.display = "block";
+ box.innerHTML = `
+   <div><strong>${d.nombre}</strong></div>
+   <div>Tiempo original: ${d.tiempoMeses} meses</div>
+   <div>Tiempo nuevo: ${nuevo} meses</div>
+   <div>Nueva cuota aprox: $${cuotaNueva.toLocaleString()}</div>
+   <div>Nuevo total a pagar: $${totalNuevo.toLocaleString()}</div>
+   <div>Ahorro aprox: $${ahorro.toLocaleString()}</div>
+ `;
 }
 
 /* ===== CRONOGRAMA ===== */
