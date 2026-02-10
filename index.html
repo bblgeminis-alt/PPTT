@@ -1,28 +1,162 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Presupuesto Personal</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<!-- Chart.js (solo gráfico mini) -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Exportaciones -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
 <style>
 :root{
- --bg:#0f172a;--card:#020617;--text:#e5e7eb;--muted:#94a3b8;
- --green:#22c55e;--blue:#3b82f6;--red:#ef4444;--border:#1e293b
+  --bg:#0f172a;--card:#020617;--text:#e5e7eb;--muted:#94a3b8;
+  --green:#22c55e;--blue:#3b82f6;--red:#ef4444;--border:#1e293b;
 }
-body{margin:0;font-family:system-ui;background:var(--bg);color:var(--text);padding:16px}
-h1,h3{text-align:center}
-.card{background:var(--card);border-radius:14px;padding:16px;margin-bottom:16px;max-width:980px;margin:auto}
-input,select,button{width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:#020617;color:var(--text);margin-bottom:10px}
-button{font-weight:600}
-.btn-add{background:var(--green);color:#022c22}
-.btn-exp{background:var(--blue);color:#fff}
-.sim-result{background:#0b1224;border-radius:10px;padding:12px;border:1px solid var(--border)}
-.table-wrapper{overflow-x:auto}
-table{width:100%;border-collapse:collapse}
-th,td{border:1px solid #000;padding:8px;text-align:center}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  padding:16px;
+}
+h1,h3{ text-align:center; margin:10px 0 14px; }
+
+.card{
+  background:var(--card);
+  border-radius:14px;
+  padding:16px;
+  margin:0 auto 16px;
+  max-width:980px;
+  box-shadow:0 10px 30px rgba(0,0,0,.4);
+}
+
+input, select, button{
+  width:100%;
+  padding:12px;
+  border-radius:10px;
+  border:1px solid var(--border);
+  background:#020617;
+  color:var(--text);
+  font-size:16px;
+  margin-bottom:10px;
+}
+input::placeholder{ color:var(--muted); }
+
+button{
+  border:none;
+  font-weight:700;
+  cursor:pointer;
+}
+.btn-add{ background:var(--green); color:#022c22; }
+.btn-exp{ background:var(--blue); color:white; }
+.btn-del{ background:var(--red); color:white; }
+
+.table-wrapper{ overflow-x:auto; }
+
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+th,td{
+  padding:10px;
+  border:1px solid var(--border);
+  text-align:center;
+}
+th{
+  color:var(--muted);
+  font-weight:600;
+}
+
+.resumen{
+  font-size:18px;
+  margin-top:8px;
+}
+.positivo{ color:var(--green); }
+.negativo{ color:var(--red); }
+
+/* ===== Tabla detalle (deudas) en móvil: tarjetas con etiquetas ===== */
+/* SOLO aplica a .stack (no al cronograma) */
+@media(max-width:640px){
+  table.stack, table.stack thead, table.stack tbody, table.stack th, table.stack tr{ display:block; }
+  table.stack thead{ display:none; }
+  table.stack tr{
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:12px;
+    margin-bottom:12px;
+    background:#020617;
+  }
+  table.stack td{
+    display:flex;
+    justify-content:space-between;
+    padding:6px 0;
+    border:none;
+    text-align:right;
+  }
+  table.stack td::before{
+    content:attr(data-label);
+    color:var(--muted);
+    font-weight:600;
+    text-align:left;
+    padding-right:10px;
+  }
+}
+
+/* ===== Cronograma estilo Excel (para ver y exportar) ===== */
+.excel-export{
+  background:white;
+  color:black;
+  padding:12px;
+  border-radius:12px;
+}
+.excel-export table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:12px;
+}
+.excel-export th, .excel-export td{
+  border:1px solid #000;
+  padding:6px;
+  text-align:right;
+}
+.excel-export th{
+  background:#e5e7eb;
+  text-align:center;
+  font-weight:800;
+}
+
+.chart-mini-wrap{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+#miniPie{
+  max-width:260px;
+  max-height:260px;
+}
+.small-note{
+  text-align:center;
+  color:var(--muted);
+  font-size:13px;
+  margin-top:6px;
+}
+
+.sim-result{
+  background:#0b1224;
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:12px;
+}
+.sim-result .title{ font-weight:800; margin-bottom:6px; }
+.sim-result .ok{ color:var(--green); font-weight:800; }
+.sim-result .warn{ color:#fbbf24; font-weight:800; }
+.sim-result .bad{ color:var(--red); font-weight:800; }
 </style>
 </head>
 
@@ -30,165 +164,470 @@ th,td{border:1px solid #000;padding:8px;text-align:center}
 
 <h1>💰 Presupuesto Personal</h1>
 
-<!-- INGRESO -->
+<!-- INGRESO + GRAFICO -->
 <div class="card">
- <h3>💵 Ingreso mensual</h3>
- <input type="number" id="ingreso">
- <button class="btn-add" onclick="guardarIngreso()">Guardar ingreso</button>
- <canvas id="miniPie" style="max-width:260px;margin:auto"></canvas>
+  <h3>💵 Ingreso mensual</h3>
+  <input type="number" id="ingreso" placeholder="Ej: 3500000">
+  <button class="btn-add" onclick="guardarIngreso()">Guardar ingreso</button>
+
+  <div class="chart-mini-wrap">
+    <canvas id="miniPie"></canvas>
+  </div>
+  <div class="small-note">Ingreso mensual vs suma de cuotas mensuales</div>
 </div>
 
 <!-- AGREGAR DEUDA -->
 <div class="card">
- <h3>📌 Agregar deuda</h3>
- <input id="nombre" placeholder="Nombre">
- <input id="valorPrestamo" type="number" placeholder="Valor préstamo">
- <input id="interes" type="number" placeholder="Interés fijo por cuota">
- <input id="tiempoMeses" type="number" placeholder="Meses">
- <button class="btn-add" onclick="agregarDeuda()">Agregar</button>
+  <h3>📌 Agregar deuda</h3>
+  <input id="nombre" placeholder="Nombre de la deuda">
+  <input id="valorPrestamo" type="number" placeholder="Valor del préstamo (capital)">
+  <input id="interesFijo" type="number" placeholder="Interés fijo por mes/cuota (ej: 100000)">
+  <input id="tiempoMeses" type="number" placeholder="Meses (ej: 5)">
+  <button class="btn-add" onclick="agregarDeuda()">Agregar deuda</button>
+</div>
+
+<!-- DETALLE DE DEUDAS -->
+<div class="card">
+  <h3>📋 Detalle de deudas</h3>
+
+  <div class="table-wrapper">
+    <table class="stack">
+      <thead>
+        <tr>
+          <th>Deuda</th>
+          <th>Préstamo</th>
+          <th>Interés fijo</th>
+          <th>Meses</th>
+          <th>Cuota mensual</th>
+          <th>Total a pagar</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody id="tablaDeudas"></tbody>
+    </table>
+  </div>
+
+  <p class="resumen">Total cuotas mensuales: $<span id="totalCuotas">0</span></p>
+  <p class="resumen">Saldo disponible: $<span id="saldoDisponible">0</span></p>
 </div>
 
 <!-- SIMULADOR -->
 <div class="card">
- <h3>⏱️ Simulador pago anticipado</h3>
- <select id="selectSimulador"></select>
+  <h3>⏱️ Simulador de pago anticipado</h3>
 
- <input type="number" id="cuotasPagadas" placeholder="Número de cuotas pagadas">
- <input type="number" id="nuevoTiempo" placeholder="Nuevo tiempo (meses)">
+  <select id="selectSimulador">
+    <option value="">-- Selecciona una deuda --</option>
+  </select>
 
- <button class="btn-exp" onclick="simular()">Simular</button>
+  <input type="number" id="cuotasPagadas" placeholder="Número de cuotas pagadas (ej: 2)">
+  <input type="number" id="nuevoTiempo" placeholder="Tiempo nuevo (meses) (ej: 2.5)">
+  <button class="btn-exp" onclick="simularPagoAnticipado()">Simular</button>
 
- <div id="resultadoSimulacion" class="sim-result" style="display:none"></div>
+  <div id="resultadoSimulacion" class="sim-result" style="display:none;"></div>
 </div>
 
 <!-- CRONOGRAMA -->
 <div class="card">
- <h3>📆 Cronograma (interés fijo por cuota)</h3>
- <select id="selectCronograma" onchange="generarCronograma()"></select>
+  <h3>📆 Cronograma de pagos (interés fijo por cuota)</h3>
 
- <div class="table-wrapper">
- <table>
-  <thead>
-   <tr>
-    <th>Mes</th>
-    <th>Cuota</th>
-    <th>Interés fijo</th>
-    <th>Capital</th>
-    <th>Saldo</th>
-   </tr>
-  </thead>
-  <tbody id="tablaCuotas"></tbody>
- </table>
- </div>
+  <select id="selectCronograma" onchange="generarCronograma()">
+    <option value="">-- Selecciona una deuda --</option>
+  </select>
+
+  <!-- Esto se exporta -->
+  <div class="table-wrapper excel-export" id="cronogramaExportable">
+    <table class="no-stack">
+      <thead>
+        <tr>
+          <th>Mes</th>
+          <th>Cuota</th>
+          <th>Interés fijo</th>
+          <th>Capital</th>
+          <th>Saldo</th>
+        </tr>
+      </thead>
+      <tbody id="tablaCuotas"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- EXPORTAR CRONOGRAMA -->
+<div class="card">
+  <h3>📤 Exportar cronograma (deuda seleccionada)</h3>
+  <button class="btn-exp" onclick="exportarCronogramaCSV()">Excel (CSV)</button>
+  <button class="btn-exp" onclick="exportarCronogramaPDF()">PDF</button>
+  <button class="btn-exp" onclick="exportarCronogramaImagen()">Imagen</button>
+  <button class="btn-exp" onclick="copiarCronogramaPortapapeles()">Copiar al portapapeles</button>
 </div>
 
 <script>
-let deudas = [];
-let ingreso = 0;
-let pie = null;
+/* =========================
+   ESTADO + STORAGE
+========================= */
+let deudas = JSON.parse(localStorage.getItem("deudas")) || [];
+let ingreso = Number(localStorage.getItem("ingreso")) || 0;
 
-/* INGRESO */
+let miniPieChart = null;
+
+document.getElementById("ingreso").value = ingreso;
+renderizarTodo();
+
+/* =========================
+   HELPERS
+========================= */
+function money(n){
+  const v = Number(n);
+  if (!Number.isFinite(v)) return "0";
+  return v.toLocaleString("es-CO");
+}
+function toNum(id){
+  return Number(document.getElementById(id).value);
+}
+function byId(id){ return document.getElementById(id); }
+
+/* =========================
+   INGRESO
+========================= */
 function guardarIngreso(){
- ingreso = +document.getElementById("ingreso").value || 0;
- render();
+  ingreso = Number(byId("ingreso").value) || 0;
+  localStorage.setItem("ingreso", String(ingreso));
+  renderizarTodo();
 }
 
-/* AGREGAR DEUDA */
+/* =========================
+   DEUDAS: AGREGAR / ELIMINAR
+   Interés fijo por mes = monto fijo (no %)
+   Total = capital + (interesFijo * meses)
+   Cuota = Total / meses
+========================= */
 function agregarDeuda(){
- const n=nombre.value;
- const v=+valorPrestamo.value;
- const i=+interes.value;
- const m=+tiempoMeses.value;
- if(!n||v<=0||m<=0)return alert("Datos inválidos");
+  const nombre = byId("nombre").value.trim();
+  const valorPrestamo = Number(byId("valorPrestamo").value);
+  const interesFijo = Number(byId("interesFijo").value);
+  const meses = Number(byId("tiempoMeses").value);
 
- const totalInteres = i * m;
- const total = v + totalInteres;
- const cuota = total / m;
+  if(!nombre || valorPrestamo <= 0 || meses <= 0 || interesFijo < 0){
+    alert("Datos inválidos. Revisa nombre, préstamo, interés fijo y meses.");
+    return;
+  }
 
- deudas.push({
-  nombre:n,
-  valorPrestamo:v,
-  interes:i,
-  tiempoMeses:m,
-  cuota:cuota,
-  totalOriginal:total
- });
+  const totalPagar = valorPrestamo + (interesFijo * meses);
+  const cuotaMensual = totalPagar / meses;
 
- render();
+  deudas.push({
+    nombre,
+    valorPrestamo,
+    interesFijo,      // monto fijo por mes/cuota
+    tiempoMeses: meses,
+    cuotaMensual,
+    totalPagar
+  });
+
+  localStorage.setItem("deudas", JSON.stringify(deudas));
+
+  // limpiar campos
+  byId("nombre").value = "";
+  byId("valorPrestamo").value = "";
+  byId("interesFijo").value = "";
+  byId("tiempoMeses").value = "";
+
+  renderizarTodo();
 }
 
-/* SIMULADOR */
-function simular(){
- const idx=selectSimulador.value;
- const pagadas=+cuotasPagadas.value;
- const nuevo=+nuevoTiempo.value;
- if(idx===""||pagadas<0||nuevo<=0)return alert("Datos inválidos");
+function eliminarDeuda(index){
+  deudas.splice(index, 1);
+  localStorage.setItem("deudas", JSON.stringify(deudas));
 
- const d=deudas[idx];
-
- const totalCuotasPagadas = d.cuota * pagadas;
- const totalPagarCredito = d.valorPrestamo + (d.interes * nuevo);
- const nuevoSaldo = totalPagarCredito - totalCuotasPagadas;
- const ahorro = d.totalOriginal - totalPagarCredito;
-
- resultadoSimulacion.style.display="block";
- resultadoSimulacion.innerHTML=`
- <strong>${d.nombre}</strong><br>
- Tiempo original: ${d.tiempoMeses} meses<br>
- Tiempo nuevo: ${nuevo} meses<br><br>
-
- <strong>Total cuotas pagadas:</strong> $${totalCuotasPagadas.toLocaleString()}<br>
- <strong>Total a pagar crédito:</strong> $${totalPagarCredito.toLocaleString()}<br>
- <strong>Nuevo saldo a pagar:</strong> $${nuevoSaldo.toLocaleString()}<br><br>
-
- <strong>Ahorro aproximado:</strong> $${ahorro.toLocaleString()}
- `;
+  // limpiar cronograma si quedó apuntando a una deuda inexistente
+  byId("tablaCuotas").innerHTML = "";
+  byId("selectCronograma").value = "";
+  renderizarTodo();
 }
 
-/* CRONOGRAMA */
+/* =========================
+   RENDER: TABLA + SELECTS + RESUMEN + GRAFICO
+========================= */
+function renderizarTodo(){
+  renderTablaDeudas();
+  renderSelects();
+  renderResumenYGrafico();
+  // si hay una deuda seleccionada en cronograma, regenerar
+  if (byId("selectCronograma").value !== ""){
+    generarCronograma();
+  }
+}
+
+function renderTablaDeudas(){
+  const tbody = byId("tablaDeudas");
+  tbody.innerHTML = "";
+
+  deudas.forEach((d, i) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td data-label="Deuda">${d.nombre}</td>
+      <td data-label="Préstamo">$${money(d.valorPrestamo)}</td>
+      <td data-label="Interés fijo">$${money(d.interesFijo)}</td>
+      <td data-label="Meses">${d.tiempoMeses}</td>
+      <td data-label="Cuota mensual">$${money(d.cuotaMensual)}</td>
+      <td data-label="Total a pagar">$${money(d.totalPagar)}</td>
+      <td data-label="Acción">
+        <button class="btn-del" onclick="eliminarDeuda(${i})">Eliminar</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderSelects(){
+  const selSim = byId("selectSimulador");
+  const selCro = byId("selectCronograma");
+
+  const prevSim = selSim.value;
+  const prevCro = selCro.value;
+
+  selSim.innerHTML = `<option value="">-- Selecciona una deuda --</option>`;
+  selCro.innerHTML = `<option value="">-- Selecciona una deuda --</option>`;
+
+  deudas.forEach((d, i) => {
+    const o1 = document.createElement("option");
+    o1.value = String(i);
+    o1.textContent = d.nombre;
+    selSim.appendChild(o1);
+
+    const o2 = document.createElement("option");
+    o2.value = String(i);
+    o2.textContent = d.nombre;
+    selCro.appendChild(o2);
+  });
+
+  // intentar mantener selecciones
+  if (prevSim !== "") selSim.value = prevSim;
+  if (prevCro !== "") selCro.value = prevCro;
+}
+
+function renderResumenYGrafico(){
+  const totalCuotas = deudas.reduce((acc, d) => acc + (Number(d.cuotaMensual) || 0), 0);
+  byId("totalCuotas").innerText = money(totalCuotas);
+
+  const saldo = (Number(ingreso) || 0) - totalCuotas;
+  const saldoEl = byId("saldoDisponible");
+  saldoEl.innerText = money(saldo);
+  saldoEl.className = saldo < 0 ? "negativo" : "positivo";
+
+  renderMiniPie(ingreso, totalCuotas);
+}
+
+function renderMiniPie(ingresoMensual, cuotasMensuales){
+  const ingresoVal = Math.max(Number(ingresoMensual) || 0, 0);
+  const cuotasVal = Math.max(Number(cuotasMensuales) || 0, 0);
+  const saldo = Math.max(ingresoVal - cuotasVal, 0);
+
+  if (miniPieChart) miniPieChart.destroy();
+
+  miniPieChart = new Chart(byId("miniPie"), {
+    type: "doughnut",
+    data: {
+      labels: ["Cuotas mensuales", "Saldo libre"],
+      datasets: [{
+        data: [cuotasVal, saldo],
+        backgroundColor: ["#ef4444", "#22c55e"]
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: {
+          position: "bottom",
+          labels: { color: "#e5e7eb", boxWidth: 12 }
+        }
+      },
+      cutout: "60%"
+    }
+  });
+}
+
+/* =========================
+   CRONOGRAMA (interés fijo por cuota)
+   interes fijo = d.interesFijo (monto constante por mes)
+   capital = cuota - interesFijo
+   saldo baja por capital
+========================= */
 function generarCronograma(){
- tablaCuotas.innerHTML="";
- const idx=selectCronograma.value;
- if(idx==="")return;
+  const idx = byId("selectCronograma").value;
+  const tbody = byId("tablaCuotas");
+  tbody.innerHTML = "";
 
- const d=deudas[idx];
- let saldo=d.valorPrestamo;
+  if (idx === "") return;
 
- for(let m=1;m<=d.tiempoMeses;m++){
-  const capital=d.cuota-d.interes;
-  saldo=Math.max(saldo-capital,0);
+  const d = deudas[Number(idx)];
+  if (!d) return;
 
-  tablaCuotas.innerHTML+=`
-   <tr>
-    <td>${m}</td>
-    <td>${d.cuota.toFixed(0)}</td>
-    <td>${d.interes.toFixed(0)}</td>
-    <td>${capital.toFixed(0)}</td>
-    <td>${saldo.toFixed(0)}</td>
-   </tr>`;
- }
+  let saldo = d.valorPrestamo;
+  const interesFijo = d.interesFijo;
+  const cuota = d.cuotaMensual;
+
+  for (let mes = 1; mes <= d.tiempoMeses; mes++){
+    const interes = interesFijo;                 // fijo (NO se divide)
+    const capital = cuota - interes;             // parte que reduce saldo
+    saldo = Math.max(saldo - capital, 0);
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td style="text-align:center;">${mes}</td>
+      <td>${Math.round(cuota)}</td>
+      <td>${Math.round(interes)}</td>
+      <td>${Math.round(capital)}</td>
+      <td>${Math.round(saldo)}</td>
+    `;
+    tbody.appendChild(tr);
+  }
 }
 
-/* RENDER */
-function render(){
- selectSimulador.innerHTML="";
- selectCronograma.innerHTML="";
- let cuotas=0;
+/* =========================
+   SIMULADOR (solo cambian campos pedidos)
+   - Mantener:
+     Tiempo original
+     Tiempo nuevo
+     Ahorro aproximado
+   - Cambios:
+     "Nueva cuota aprox" -> Total cuotas pagadas
+     "Nuevo total a pagar" -> Total a pagar crédito
+     Nuevo: Nuevo saldo a pagar = Total a pagar crédito - Total cuotas pagadas
+   - Cuotas pagadas input requerido
+   - Interés fijo por mes
+   - Total original = capital + interesFijo * mesesOriginal
+   - Total crédito con tiempo nuevo = capital + interesFijo * nuevoTiempo
+========================= */
+function simularPagoAnticipado(){
+  const idx = byId("selectSimulador").value;
+  const cuotasPagadas = Number(byId("cuotasPagadas").value);
+  const nuevoTiempo = Number(byId("nuevoTiempo").value);
 
- deudas.forEach((d,i)=>{
-  cuotas+=d.cuota;
-  selectSimulador.innerHTML+=`<option value="${i}">${d.nombre}</option>`;
-  selectCronograma.innerHTML+=`<option value="${i}">${d.nombre}</option>`;
- });
+  if (idx === "") { alert("Selecciona una deuda."); return; }
+  if (!Number.isFinite(cuotasPagadas) || cuotasPagadas < 0) { alert("Ingresa un número válido de cuotas pagadas."); return; }
+  if (!Number.isFinite(nuevoTiempo) || nuevoTiempo <= 0) { alert("Ingresa un tiempo nuevo válido (meses)."); return; }
 
- if(pie)pie.destroy();
- pie=new Chart(miniPie,{
-  type:"doughnut",
-  data:{labels:["Cuotas","Saldo"],
-  datasets:[{data:[cuotas,Math.max(ingreso-cuotas,0)],
-  backgroundColor:["#ef4444","#22c55e"]}]},
-  options:{cutout:"60%"}
- });
+  const d = deudas[Number(idx)];
+  if (!d) { alert("Deuda no encontrada."); return; }
+
+  const tiempoOriginal = d.tiempoMeses;
+  const totalOriginal = d.totalPagar; // ya calculado: capital + interesFijo*tiempoOriginal
+
+  const totalCuotasPagadas = d.cuotaMensual * cuotasPagadas;
+
+  // Total a pagar crédito con interés fijo por mes (lineal)
+  const totalPagarCredito = d.valorPrestamo + (d.interesFijo * nuevoTiempo);
+
+  // Nuevo saldo (resta de total crédito - cuotas pagadas)
+  const nuevoSaldo = totalPagarCredito - totalCuotasPagadas;
+
+  // Ahorro aproximado (como antes): totalOriginal - totalPagarCredito
+  const ahorro = totalOriginal - totalPagarCredito;
+
+  const box = byId("resultadoSimulacion");
+  box.style.display = "block";
+
+  const saldoClass =
+    nuevoSaldo > 0 ? "warn" :
+    nuevoSaldo < 0 ? "ok" : "ok";
+
+  const saldoTexto =
+    nuevoSaldo > 0 ? `Nuevo saldo a pagar: $${money(nuevoSaldo)}` :
+    nuevoSaldo < 0 ? `Nuevo saldo a pagar: $0 (pagaste de más: $${money(Math.abs(nuevoSaldo))})` :
+    `Nuevo saldo a pagar: $0`;
+
+  box.innerHTML = `
+    <div class="title">${d.nombre}</div>
+    Tiempo original: ${tiempoOriginal} meses<br>
+    Tiempo nuevo: ${nuevoTiempo} meses<br><br>
+
+    <strong>Total cuotas pagadas:</strong> $${money(totalCuotasPagadas)}<br>
+    <strong>Total a pagar crédito:</strong> $${money(totalPagarCredito)}<br>
+    <strong class="${saldoClass}">${saldoTexto}</strong><br><br>
+
+    <strong>Ahorro aproximado:</strong> $${money(ahorro)}
+  `;
+}
+
+/* =========================
+   EXPORTACIONES (solo cronograma)
+========================= */
+function getDeudaCronograma(){
+  const idx = byId("selectCronograma").value;
+  if (idx === "") return null;
+  return deudas[Number(idx)] || null;
+}
+
+function exportarCronogramaCSV(){
+  const d = getDeudaCronograma();
+  if (!d) { alert("Selecciona una deuda para exportar el cronograma."); return; }
+
+  let saldo = d.valorPrestamo;
+  const interes = d.interesFijo;
+  const cuota = d.cuotaMensual;
+
+  let csv = "Mes,Cuota,Interés fijo,Capital,Saldo\n";
+  for (let mes = 1; mes <= d.tiempoMeses; mes++){
+    const capital = cuota - interes;
+    saldo = Math.max(saldo - capital, 0);
+    csv += `${mes},${Math.round(cuota)},${Math.round(interes)},${Math.round(capital)},${Math.round(saldo)}\n`;
+  }
+
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `cronograma_${d.nombre}.csv`;
+  a.click();
+}
+
+function exportarCronogramaPDF(){
+  const d = getDeudaCronograma();
+  if (!d) { alert("Selecciona una deuda para exportar el cronograma."); return; }
+
+  html2pdf()
+    .from(byId("cronogramaExportable"))
+    .set({
+      margin: 0.4,
+      filename: `cronograma_${d.nombre}.pdf`,
+      html2canvas: { scale: 2 }
+    })
+    .save();
+}
+
+function exportarCronogramaImagen(){
+  const d = getDeudaCronograma();
+  if (!d) { alert("Selecciona una deuda para exportar el cronograma."); return; }
+
+  html2canvas(byId("cronogramaExportable")).then(canvas=>{
+    const a = document.createElement("a");
+    a.href = canvas.toDataURL("image/png");
+    a.download = `cronograma_${d.nombre}.png`;
+    a.click();
+  });
+}
+
+function copiarCronogramaPortapapeles(){
+  const d = getDeudaCronograma();
+  if (!d) { alert("Selecciona una deuda para copiar el cronograma."); return; }
+
+  let saldo = d.valorPrestamo;
+  const interes = d.interesFijo;
+  const cuota = d.cuotaMensual;
+
+  let texto = `Cronograma - ${d.nombre}\n`;
+  texto += `Capital: ${d.valorPrestamo} | Interés fijo: ${d.interesFijo} | Meses: ${d.tiempoMeses}\n\n`;
+  texto += `Mes | Cuota | Interés | Capital | Saldo\n`;
+
+  for (let mes = 1; mes <= d.tiempoMeses; mes++){
+    const capital = cuota - interes;
+    saldo = Math.max(saldo - capital, 0);
+    texto += `${mes} | ${Math.round(cuota)} | ${Math.round(interes)} | ${Math.round(capital)} | ${Math.round(saldo)}\n`;
+  }
+
+  navigator.clipboard.writeText(texto)
+    .then(()=>alert("Cronograma copiado ✅"))
+    .catch(()=>alert("No se pudo copiar. Revisa permisos del navegador."));
 }
 </script>
 
